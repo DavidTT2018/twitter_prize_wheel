@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import PageContainer from '../components/PageContainer';
 import SpinningWheel from '../components/SpinningWheel';
+import { supabase } from '../services/supabase';
 
 const PRIZES = [
   '10% OFF', 
@@ -16,32 +17,50 @@ const PRIZES = [
 ];
 
 const WheelSpinPage: React.FC = () => {
-  const { dispatch } = useUser();
+  const { state, dispatch } = useUser();
   const navigate = useNavigate();
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedPrize, setSelectedPrize] = useState<string | null>(null);
 
-  const handleSpin = () => {
+  const handleSpin = async () => {
     if (isSpinning) return;
     
     setIsSpinning(true);
     
-    // Pick a random prize
-    const randomIndex = Math.floor(Math.random() * PRIZES.length);
-    const prize = PRIZES[randomIndex];
-    
-    // After spinning animation completes (5 seconds)
-    setTimeout(() => {
-      setSelectedPrize(prize);
-      setIsSpinning(false);
+    try {
+      // Mark session as used
+      if (state.sessionId) {
+        const { error } = await supabase
+          .from('wheel_sessions')
+          .update({ 
+            is_used: true,
+            accessed_at: new Date().toISOString()
+          })
+          .eq('session_id', state.sessionId);
+
+        if (error) throw error;
+      }
       
-      // Update context and navigate after showing the prize for a moment
+      // Pick a random prize
+      const randomIndex = Math.floor(Math.random() * PRIZES.length);
+      const prize = PRIZES[randomIndex];
+      
+      // After spinning animation completes (5 seconds)
       setTimeout(() => {
-        dispatch({ type: 'SPIN_WHEEL' });
-        dispatch({ type: 'AWARD_PRIZE', payload: prize });
-        navigate('/prize');
-      }, 2000);
-    }, 5000);
+        setSelectedPrize(prize);
+        setIsSpinning(false);
+        
+        // Update context and navigate after showing the prize for a moment
+        setTimeout(() => {
+          dispatch({ type: 'SPIN_WHEEL' });
+          dispatch({ type: 'AWARD_PRIZE', payload: prize });
+          navigate('/prize');
+        }, 2000);
+      }, 5000);
+    } catch (err) {
+      console.error('Error updating session:', err);
+      setIsSpinning(false);
+    }
   };
 
   return (

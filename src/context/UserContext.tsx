@@ -8,6 +8,7 @@ interface UserState {
   isPrizeAwarded: boolean;
   prize: string | null;
   twitterUsername: string | null;
+  sessionId: string | null;
 }
 
 // Define action types
@@ -17,6 +18,7 @@ type UserAction =
   | { type: 'SPIN_WHEEL' }
   | { type: 'AWARD_PRIZE'; payload: string }
   | { type: 'SET_TWITTER_USERNAME'; payload: string }
+  | { type: 'SET_SESSION_ID'; payload: string }
   | { type: 'RESET' };
 
 // Define initial state
@@ -27,6 +29,7 @@ const initialState: UserState = {
   isPrizeAwarded: false,
   prize: null,
   twitterUsername: null,
+  sessionId: null,
 };
 
 // Create context
@@ -57,6 +60,11 @@ const userReducer = (state: UserState, action: UserAction): UserState => {
       return {
         ...state,
         twitterUsername: action.payload,
+      };
+    case 'SET_SESSION_ID':
+      return {
+        ...state,
+        sessionId: action.payload,
       };
     case 'RESET':
       return initialState;

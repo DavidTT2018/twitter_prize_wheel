@@ -13,3 +13,45 @@ export const generateUniqueCode = () => {
   }
   return code;
 };
+
+export const generateSessionId = () => {
+  return crypto.randomUUID();
+};
+
+export const verifySession = async (sessionId: string | null): Promise<boolean> => {
+  if (!sessionId) return false;
+
+  try {
+    const { data, error } = await supabase
+      .from('wheel_sessions')
+      .select('*')
+      .eq('session_id', sessionId)
+      .eq('is_used', false)
+      .single();
+
+    if (error) throw error;
+
+    return !!data;
+  } catch (err) {
+    console.error('Error verifying session:', err);
+    return false;
+  }
+};
+
+export const markSessionAsUsed = async (sessionId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('wheel_sessions')
+      .update({ 
+        is_used: true,
+        accessed_at: new Date().toISOString()
+      })
+      .eq('session_id', sessionId);
+
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('Error marking session as used:', err);
+    return false;
+  }
+};

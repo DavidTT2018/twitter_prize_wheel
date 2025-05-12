@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useUser } from './context/UserContext';
 import LandingPage from './pages/LandingPage';
 import AgeVerificationPage from './pages/AgeVerificationPage';
@@ -9,7 +10,18 @@ import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
-  const { state } = useUser();
+  const { state, dispatch } = useUser();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Get session ID from URL parameters
+    const params = new URLSearchParams(location.search);
+    const sessionId = params.get('session');
+    
+    if (sessionId) {
+      dispatch({ type: 'SET_SESSION_ID', payload: sessionId });
+    }
+  }, [location, dispatch]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-900 text-white font-sans">
