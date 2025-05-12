@@ -12,11 +12,29 @@ const PrizeAwardedPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [ip, setIp] = useState("");
 
   useEffect(() => {
     const generateAndStorePrize = async () => {
       const code = generateUniqueCode();
       setUniqueCode(code);
+
+      try {
+        const response = await fetch("https://api.ipify.org?format=json");
+        if (!response.ok) {
+          throw new Error("Failed to fetch IP address");
+        }
+
+        const ipData = await response.json();
+        if (!ipData || !ipData.ip) {
+          throw new Error("Invalid IP address data received");
+        }
+
+        setIp(ipData.ip);
+      } catch (err) {
+        console.error("Error storing prize:", err);
+        setError("Failed to generate prize code. Please try again.");
+      }
     };
 
     confetti();
@@ -38,6 +56,7 @@ const PrizeAwardedPage: React.FC = () => {
         .insert({
           code: uniqueCode,
           prize: state.prize,
+          ip_address: ip,
           discord_username: discordUsername.trim(),
           claimed: true,
           claimed_at: new Date().toISOString(),
