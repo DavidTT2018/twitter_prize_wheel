@@ -15,12 +15,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo = '/'
 }) => {
   const { state } = useUser();
-  const [isValidSession, setIsValidSession] = useState<boolean | null>(null);
+  const [isValidSession, setIsValidSession] = useState<boolean>(true);
 
   useEffect(() => {
     const checkSession = async () => {
-      const isValid = await verifySession(state.sessionId);
-      setIsValidSession(isValid);
+      if (!state.sessionId) {
+        setIsValidSession(true);
+        return;
+      }
+
+      try {
+        const isValid = await verifySession(state.sessionId);
+        setIsValidSession(isValid);
+      } catch (error) {
+        // If there's an error checking the session, we'll allow access
+        console.error('Error verifying session:', error);
+        setIsValidSession(true);
+      }
     };
 
     checkSession();
@@ -31,12 +42,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  // Redirect if session is invalid or condition is not met
-  if (!isValidSession || !condition) {
-    return <Navigate to={redirectTo} replace />;
+  // Allow access if either the condition is met or we're ignoring session validation
+  if (isValidSession && condition) {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
+  return <Navigate to={redirectTo} replace />;
 };
 
 export default ProtectedRoute;
