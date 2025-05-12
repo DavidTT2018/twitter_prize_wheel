@@ -3,22 +3,46 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import { AlertTriangle } from 'lucide-react';
 import PageContainer from '../components/PageContainer';
-import { generateSessionId } from '../services/supabase';
+import { generateSessionId, supabase } from '../services/supabase';
 
 const AgeVerificationPage: React.FC = () => {
   const { dispatch } = useUser();
   const navigate = useNavigate();
   const [showError, setShowError] = useState(false);
 
-  const handleYesClick = () => {
+  const handleYesClick = async () => {
     dispatch({ type: 'VERIFY_AGE' });
     
     // Generate a session ID and store it
     const sessionId = generateSessionId();
-    dispatch({ type: 'SET_SESSION_ID', payload: sessionId });
     
-    // Navigate to twitter-follow with session ID
-    navigate(`/twitter-follow?session=${sessionId}`);
+    try {
+      // Get IP address
+      const response = await fetch("https://api.ipify.org?format=json");
+      const ipData = await response.json();
+      
+      // Store session in Supabase
+      const { error } = await supabase
+        .from('wheel_sessions')
+        .insert([
+          {
+            session_id: sessionId,
+            ip_address: ipData.ip,
+          },
+        ]);
+
+      if (error) throw error;
+
+      // Store session ID in context
+      dispatch({ type: 'SET_SESSION_ID', payload: sessionId });
+      
+      // Navigate to twitter-follow with session ID
+      navigate(`/twitter-follow?session=${sessionId}`);
+    } catch (err) {
+      console.error('Error creating session:', err);
+      // Continue anyway to maintain user experience
+      navigate('/twitter-follow');
+    }
   };
 
   const handleNoClick = () => {

@@ -1,49 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { Twitter } from "lucide-react";
 import PageContainer from "../components/PageContainer";
 import { verifyTwitterFollow } from "../services/api";
-import { supabase, generateSessionId } from "../services/supabase";
 
 const TwitterFollowPage: React.FC = () => {
-  const { dispatch } = useUser();
+  const { state, dispatch } = useUser();
   const navigate = useNavigate();
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const twitterUsername = "Mattonkick";
-
-  useEffect(() => {
-    const createSession = async () => {
-      try {
-        const response = await fetch("https://api.ipify.org?format=json");
-        const ipData = await response.json();
-        const sessionId = generateSessionId();
-
-        const { error } = await supabase.from("wheel_sessions").insert([
-          {
-            session_id: sessionId,
-            ip_address: ipData.ip,
-          },
-        ]);
-
-        if (error) throw error;
-
-        // Store session ID in context for later use
-        dispatch({ type: "SET_SESSION_ID", payload: sessionId });
-
-        // Update URL with session ID
-        const newUrl = `${window.location.pathname}?session=${sessionId}`;
-        window.history.replaceState({}, "", newUrl);
-      } catch (err) {
-        console.error("Error creating session:", err);
-        setError("Failed to initialize session. Please try again.");
-      }
-    };
-    createSession();
-  }, [dispatch]);
 
   const handleFollowClick = async () => {
     if (!username.trim()) {

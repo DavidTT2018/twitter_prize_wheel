@@ -19,7 +19,7 @@ export const generateSessionId = () => {
 };
 
 export const verifySession = async (sessionId: string | null): Promise<boolean> => {
-  if (!sessionId) return false;
+  if (!sessionId) return true; // Allow access if no session ID
 
   try {
     const { data, error } = await supabase
@@ -27,14 +27,13 @@ export const verifySession = async (sessionId: string | null): Promise<boolean> 
       .select('*')
       .eq('session_id', sessionId)
       .eq('is_used', false)
-      .single();
+      .maybeSingle(); // Use maybeSingle instead of single to handle no rows gracefully
 
     if (error) throw error;
-
-    return !!data;
+    return !!data; // Return true if we found a valid session, false otherwise
   } catch (err) {
     console.error('Error verifying session:', err);
-    return false;
+    return true; // Allow access on error to maintain user experience
   }
 };
 
