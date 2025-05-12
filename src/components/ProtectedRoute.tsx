@@ -20,7 +20,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   useEffect(() => {
     const checkSession = async () => {
       if (!state.sessionId) {
-        setIsValidSession(true); // Allow access for new users without session
+        setIsValidSession(false);
         return;
       }
 
@@ -29,7 +29,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         setIsValidSession(isValid);
       } catch (error) {
         console.error('Error verifying session:', error);
-        setIsValidSession(true); // Allow access on error to maintain user experience
+        setIsValidSession(false);
       }
     };
 
@@ -41,8 +41,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  // Allow access if the condition is met and either there's no session or the session is valid
-  if (condition && isValidSession) {
+  // Only allow access if both the condition is met AND the session is valid
+  if (isValidSession && condition) {
     return <>{children}</>;
   }
 
